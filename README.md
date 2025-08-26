@@ -1,5 +1,9 @@
 # Zsh Doppler Plugin
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub stars](https://img.shields.io/github/stars/lsdcapital/zsh-doppler)](https://github.com/lsdcapital/zsh-doppler/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/lsdcapital/zsh-doppler)](https://github.com/lsdcapital/zsh-doppler/issues)
+
 A lightweight Zsh plugin that displays your current [Doppler](https://doppler.com) project and configuration in your shell prompt from environment variables. Perfect for developers working with multiple Doppler environments who want to keep track of their current context.
 
 ![Demo](https://img.shields.io/badge/demo-%5Bmyproject%2Fdev%5D-cyan)
@@ -25,7 +29,7 @@ A lightweight Zsh plugin that displays your current [Doppler](https://doppler.co
 
 1. Clone this repository to your Oh My Zsh custom plugins directory:
 ```bash
-git clone https://github.com/your-username/zsh-doppler.git ~/.oh-my-zsh/custom/plugins/zsh-doppler
+git clone https://github.com/lsdcapital/zsh-doppler.git ~/.oh-my-zsh/custom/plugins/zsh-doppler
 ```
 
 2. Add `zsh-doppler` to your plugins list in `~/.zshrc`:
@@ -42,7 +46,7 @@ source ~/.zshrc
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-username/zsh-doppler.git ~/.zsh-doppler
+git clone https://github.com/lsdcapital/zsh-doppler.git ~/.zsh-doppler
 ```
 
 2. Add this line to your `~/.zshrc`:
@@ -53,6 +57,24 @@ source ~/.zsh-doppler/zsh-doppler.plugin.zsh
 3. Restart your terminal or run:
 ```bash
 source ~/.zshrc
+```
+
+### Zinit
+
+```bash
+zinit light lsdcapital/zsh-doppler
+```
+
+### Zplug
+
+```bash
+zplug "lsdcapital/zsh-doppler"
+```
+
+### Antigen
+
+```bash
+antigen bundle lsdcapital/zsh-doppler
 ```
 
 ### Manual Installation
