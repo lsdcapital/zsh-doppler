@@ -4,27 +4,114 @@
 # Shows current Doppler project and config in your prompt
 
 # Configuration variables with defaults
-: ${DOPPLER_PROMPT_ENABLED:=true}
-: ${DOPPLER_PROMPT_PREFIX:="["}
-: ${DOPPLER_PROMPT_SUFFIX:="]"}
-: ${DOPPLER_PROMPT_SEPARATOR:="/"}
-: ${DOPPLER_PROMPT_FORMAT:="%project%separator%config"}
-: ${DOPPLER_PROMPT_COLOR:="cyan"}
+[[ -z "$DOPPLER_PROMPT_ENABLED" ]] && DOPPLER_PROMPT_ENABLED=true
+[[ -z "$DOPPLER_PROMPT_PREFIX" ]] && DOPPLER_PROMPT_PREFIX="["
+[[ -z "$DOPPLER_PROMPT_SUFFIX" ]] && DOPPLER_PROMPT_SUFFIX="]"
+[[ -z "$DOPPLER_PROMPT_SEPARATOR" ]] && DOPPLER_PROMPT_SEPARATOR="/"
+[[ -z "$DOPPLER_PROMPT_FORMAT" ]] && DOPPLER_PROMPT_FORMAT="%project%separator%config"
+[[ -z "$DOPPLER_PROMPT_COLOR" ]] && DOPPLER_PROMPT_COLOR="cyan"
 
-# No caching needed - environment variables are already fast
+# Environment-based color configuration
+[[ -z "$DOPPLER_COLOR_DEV" ]] && DOPPLER_COLOR_DEV="green"
+[[ -z "$DOPPLER_COLOR_STAGING" ]] && DOPPLER_COLOR_STAGING="yellow"
+[[ -z "$DOPPLER_COLOR_PROD" ]] && DOPPLER_COLOR_PROD="red"
+[[ -z "$DOPPLER_COLOR_DEFAULT" ]] && DOPPLER_COLOR_DEFAULT="cyan"
+
+
 
 # Check if doppler CLI is available
 function _doppler_check_cli() {
     command -v doppler >/dev/null 2>&1
 }
 
-# Get current doppler project and config from environment variables only
+# Determine color based on config/environment name
+function _doppler_get_color() {
+    local config="$1"
+    local color
+
+    # Convert to lowercase for matching
+    local config_lower="${config:l}"
+
+    # Match environment patterns
+    case "$config_lower" in
+        dev*|development*|local*)
+            color="$DOPPLER_COLOR_DEV"
+            ;;
+        stag*|staging*|test*|uat*)
+            color="$DOPPLER_COLOR_STAGING"
+            ;;
+        prod*|production*|live*)
+            color="$DOPPLER_COLOR_PROD"
+            ;;
+        *)
+            color="$DOPPLER_COLOR_DEFAULT"
+            ;;
+    esac
+
+    echo "$color"
+}
+
+# Convert color names to Powerlevel10k color codes
+function _doppler_get_p10k_color() {
+    local color="$1"
+
+    case "$color" in
+        green)
+            echo "2"
+            ;;
+        yellow)
+            echo "3"
+            ;;
+        red)
+            echo "1"
+            ;;
+        cyan)
+            echo "6"
+            ;;
+        blue)
+            echo "4"
+            ;;
+        magenta)
+            echo "5"
+            ;;
+        white)
+            echo "7"
+            ;;
+        *)
+            # If it's already a number or unknown, pass it through
+            echo "$color"
+            ;;
+    esac
+}
+
+# Get current doppler project and config from environment variables or ~/.doppler/.doppler.yaml
 function _doppler_get_info() {
-    # Check environment variables (fast and simple)
+    # Check environment variables first (for doppler run sessions)
     if [[ -n "$DOPPLER_PROJECT" ]] && [[ -n "${DOPPLER_CONFIG:-$DOPPLER_ENVIRONMENT}" ]]; then
-        echo "$DOPPLER_PROJECT:${DOPPLER_CONFIG:-$DOPPLER_ENVIRONMENT}"
+        local info="$DOPPLER_PROJECT:${DOPPLER_CONFIG:-$DOPPLER_ENVIRONMENT}"
+        echo "$info"
         return 0
     fi
+
+    # Try to get from ~/.doppler/.doppler.yaml (fastest method)
+    # Allow override for testing via DOPPLER_YAML_PATH environment variable
+    local doppler_yaml="${DOPPLER_YAML_PATH:-$HOME/.doppler/.doppler.yaml}"
+    if [[ -f "$doppler_yaml" ]]; then
+        local current_dir="$(pwd)"
+        local info
+        info=$(awk -v dir="$current_dir" '
+            $0 ~ "^[[:space:]]*" dir ":" {found=1}
+            found && /enclave.project:/ {project=$2}
+            found && /enclave.config:/ {config=$2; print project ":" config; exit}
+        ' "$doppler_yaml" 2>/dev/null)
+
+        if [[ -n "$info" ]]; then
+            echo "$info"
+            return 0
+        fi
+    fi
+
+
     return 1
 }
 
@@ -52,18 +139,27 @@ function doppler_prompt_info() {
 
     local info
     if info=$(_doppler_get_info); then
+        local config="${info##*:}"
+        local color=$(_doppler_get_color "$config")
         local formatted=$(_doppler_format_prompt "$info")
-        echo "%F{$DOPPLER_PROMPT_COLOR}${DOPPLER_PROMPT_PREFIX}${formatted}${DOPPLER_PROMPT_SUFFIX}%f"
+        echo "%F{$color}${DOPPLER_PROMPT_PREFIX}${formatted}${DOPPLER_PROMPT_SUFFIX}%f"
     fi
 }
 
-# Alias for shorter usage
-alias doppler_prompt='doppler_prompt_info'
+# Function alias for shorter usage (works in non-interactive shells)
+function doppler_prompt() {
+    doppler_prompt_info "$@"
+}
 
-# Auto-update prompt if PROMPT contains doppler_prompt_info
+# Cache doppler prompt info to avoid running on every keystroke
 function _doppler_precmd() {
-    # This function runs before each prompt is displayed
-    # The prompt will be updated automatically if it contains $(doppler_prompt_info)
+    # Calculate doppler prompt info once per command (not per redraw!)
+    # This prevents expensive file I/O on every keystroke, backspace, cursor movement, etc.
+    if [[ "$DOPPLER_PROMPT_ENABLED" == "true" ]]; then
+        DOPPLER_PROMPT_INFO=$(doppler_prompt_info)
+    else
+        DOPPLER_PROMPT_INFO=""
+    fi
 }
 
 # Enable prompt substitution
@@ -78,14 +174,19 @@ function doppler_prompt_setup() {
     cat << 'EOF'
 # Add Doppler info to your prompt:
 
+# RECOMMENDED: Use cached variable (updated once per command, not per keystroke)
 # For left side of prompt (PROMPT or PS1):
-PROMPT='$(doppler_prompt_info) %~ $ '
+PROMPT='${DOPPLER_PROMPT_INFO} %~ $ '
 
 # For right side of prompt (RPROMPT or RPS1):
-RPROMPT='$(doppler_prompt_info)'
+RPROMPT='${DOPPLER_PROMPT_INFO}'
 
 # Or integrate with existing prompt:
-PROMPT='%F{green}%n@%m%f $(doppler_prompt_info)%F{blue}%~%f $ '
+PROMPT='%F{green}%n@%m%f ${DOPPLER_PROMPT_INFO}%F{blue}%~%f $ '
+
+# LEGACY (not recommended): Direct function call (runs on every keystroke!)
+# PROMPT='$(doppler_prompt_info) %~ $ '
+# RPROMPT='$(doppler_prompt_info)'
 
 # Configuration options:
 export DOPPLER_PROMPT_ENABLED=true        # Enable/disable the prompt
@@ -94,7 +195,6 @@ export DOPPLER_PROMPT_SUFFIX="]"          # Text after doppler info
 export DOPPLER_PROMPT_SEPARATOR="/"       # Separator between project and config
 export DOPPLER_PROMPT_FORMAT="%project%separator%config"  # Format template
 export DOPPLER_PROMPT_COLOR="cyan"        # Color (red, green, blue, yellow, magenta, cyan, white)
-export DOPPLER_PROMPT_CACHE_TTL=5         # Cache duration in seconds
 EOF
 }
 
@@ -106,11 +206,21 @@ function doppler_prompt_config() {
     echo "  DOPPLER_PROMPT_SUFFIX: '$DOPPLER_PROMPT_SUFFIX'"
     echo "  DOPPLER_PROMPT_SEPARATOR: '$DOPPLER_PROMPT_SEPARATOR'"
     echo "  DOPPLER_PROMPT_FORMAT: '$DOPPLER_PROMPT_FORMAT'"
-    echo "  DOPPLER_PROMPT_COLOR: $DOPPLER_PROMPT_COLOR"
-    echo "  DOPPLER_PROMPT_CACHE_TTL: $DOPPLER_PROMPT_CACHE_TTL"
+    echo "  DOPPLER_PROMPT_COLOR: $DOPPLER_PROMPT_COLOR (fallback)"
     echo ""
-    echo "Current doppler info: $(doppler_prompt_info)"
-    echo "Formatted output: $(doppler_prompt_info)"
+    echo "Environment-based Colors:"
+    echo "  DOPPLER_COLOR_DEV: $DOPPLER_COLOR_DEV"
+    echo "  DOPPLER_COLOR_STAGING: $DOPPLER_COLOR_STAGING"
+    echo "  DOPPLER_COLOR_PROD: $DOPPLER_COLOR_PROD"
+    echo "  DOPPLER_COLOR_DEFAULT: $DOPPLER_COLOR_DEFAULT"
+    echo ""
+    echo "Caching behavior:"
+    echo "  DOPPLER_PROMPT_INFO (cached): '$DOPPLER_PROMPT_INFO'"
+    echo "  Current prompt info: $(doppler_prompt_info)"
+    echo ""
+    echo "Usage recommendation:"
+    echo "  Use: PROMPT='\${DOPPLER_PROMPT_INFO} %~ $ '  # Cached (fast)"
+    echo "  Not: PROMPT='\$(doppler_prompt_info) %~ $ ' # Function call (slow)"
 }
 
 # =============================================================================
@@ -118,11 +228,11 @@ function doppler_prompt_config() {
 # =============================================================================
 
 # Powerlevel10k configuration variables
-: ${POWERLEVEL9K_DOPPLER_BACKGROUND:=none}
-: ${POWERLEVEL9K_DOPPLER_FOREGROUND:=51}
-: ${POWERLEVEL9K_DOPPLER_VISUAL_IDENTIFIER_EXPANSION:='🔐'}
-: ${POWERLEVEL9K_DOPPLER_PREFIX:='['}
-: ${POWERLEVEL9K_DOPPLER_SUFFIX:=']'}
+[[ -z "$POWERLEVEL9K_DOPPLER_BACKGROUND" ]] && POWERLEVEL9K_DOPPLER_BACKGROUND=none
+[[ -z "$POWERLEVEL9K_DOPPLER_FOREGROUND" ]] && POWERLEVEL9K_DOPPLER_FOREGROUND=51
+[[ -z "$POWERLEVEL9K_DOPPLER_VISUAL_IDENTIFIER_EXPANSION" ]] && POWERLEVEL9K_DOPPLER_VISUAL_IDENTIFIER_EXPANSION='🔐'
+[[ -z "$POWERLEVEL9K_DOPPLER_PREFIX" ]] && POWERLEVEL9K_DOPPLER_PREFIX='['
+[[ -z "$POWERLEVEL9K_DOPPLER_SUFFIX" ]] && POWERLEVEL9K_DOPPLER_SUFFIX=']'
 
 # Check if we're running under Powerlevel10k
 function _doppler_is_p10k() {
@@ -141,21 +251,25 @@ function prompt_doppler() {
         local project="${info%%:*}"
         local config="${info##*:}"
         local formatted
-        
+
+        # Determine color based on config
+        local color=$(_doppler_get_color "$config")
+        local p10k_color=$(_doppler_get_p10k_color "$color")
+
         # Use p10k-specific format if available, otherwise fallback to generic format
         if [[ -n "$POWERLEVEL9K_DOPPLER_FORMAT" ]]; then
             formatted="$POWERLEVEL9K_DOPPLER_FORMAT"
         else
             formatted="$DOPPLER_PROMPT_FORMAT"
         fi
-        
+
         # Replace placeholders
         formatted="${formatted//\%project/$project}"
         formatted="${formatted//\%config/$config}"
         formatted="${formatted//\%separator/$DOPPLER_PROMPT_SEPARATOR}"
-        
-        # Use p10k segment API
-        p10k segment -f "$POWERLEVEL9K_DOPPLER_FOREGROUND" \
+
+        # Use p10k segment API with dynamic color
+        p10k segment -f "$p10k_color" \
                      -b "$POWERLEVEL9K_DOPPLER_BACKGROUND" \
                      -i "$POWERLEVEL9K_DOPPLER_VISUAL_IDENTIFIER_EXPANSION" \
                      -t "${POWERLEVEL9K_DOPPLER_PREFIX}${formatted}${POWERLEVEL9K_DOPPLER_SUFFIX}"
@@ -166,7 +280,7 @@ function prompt_doppler() {
 function instant_prompt_doppler() {
     # For instant prompt, check environment variables only (no external commands)
     # This ensures the prompt loads instantly with real data when available
-    
+
     if [[ -n "$DOPPLER_PROJECT" ]] && [[ -n "$DOPPLER_CONFIG" || -n "$DOPPLER_ENVIRONMENT" ]]; then
         local project="$DOPPLER_PROJECT"
         local config="${DOPPLER_CONFIG:-$DOPPLER_ENVIRONMENT}"
@@ -174,8 +288,12 @@ function instant_prompt_doppler() {
         formatted="${formatted//\%project/$project}"
         formatted="${formatted//\%config/$config}"
         formatted="${formatted//\%separator/$DOPPLER_PROMPT_SEPARATOR}"
-        
-        p10k segment -f "$POWERLEVEL9K_DOPPLER_FOREGROUND" \
+
+        # Determine color based on config
+        local color=$(_doppler_get_color "$config")
+        local p10k_color=$(_doppler_get_p10k_color "$color")
+
+        p10k segment -f "$p10k_color" \
                      -b "$POWERLEVEL9K_DOPPLER_BACKGROUND" \
                      -i "$POWERLEVEL9K_DOPPLER_VISUAL_IDENTIFIER_EXPANSION" \
                      -t "${POWERLEVEL9K_DOPPLER_PREFIX}${formatted}${POWERLEVEL9K_DOPPLER_SUFFIX}"

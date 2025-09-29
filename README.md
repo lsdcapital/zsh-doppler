@@ -10,18 +10,21 @@ A lightweight Zsh plugin that displays your current [Doppler](https://doppler.co
 
 ## Features
 
-- ⚡ **Lightning Fast** - Zero CLI overhead, reads only environment variables
+- ⚡ **Lightning Fast** - Reads from Doppler CLI configuration and environment variables
 - 🚀 **CI/CD Perfect** - Works seamlessly in Docker, CI/CD, and production environments
-- 🎯 **Auto-detection** - Shows when `DOPPLER_PROJECT` and `DOPPLER_CONFIG` are set
-- 🎨 **Customizable** - Configure colors, format, prefix/suffix, and more
+- 🎯 **Auto-detection** - Shows when `DOPPLER_PROJECT` and `DOPPLER_CONFIG` are set or configured
+- 🎨 **Smart Colors** - Environment-based colors (green for dev, yellow for staging, red for prod)
+- 🔧 **Highly Customizable** - Configure colors, format, prefix/suffix, and more
 - 🔌 **Compatible** - Works with Oh My Zsh, Prezto, or standalone Zsh
 - 💎 **Powerlevel10k** - Full custom segment support with instant prompt compatibility
-- 🛡️ **Reliable** - No external commands that could hang or fail
+- 🛡️ **Reliable** - Graceful fallbacks and error handling
+- ✅ **Well Tested** - Comprehensive test suite with 30+ tests
 
 ## Requirements
 
 - Zsh
-- Environment variables `DOPPLER_PROJECT` and `DOPPLER_CONFIG` (automatically set by `doppler run`)
+- [Doppler CLI](https://docs.doppler.com/docs/install-cli) (optional, for directory-based configuration)
+- Environment variables `DOPPLER_PROJECT` and `DOPPLER_CONFIG` (automatically set by `doppler run`) or directory-based Doppler configuration
 
 ## Installation
 
@@ -177,7 +180,11 @@ Customize the plugin behavior with these environment variables:
 | `DOPPLER_PROMPT_SUFFIX` | `]` | Text after Doppler info |
 | `DOPPLER_PROMPT_SEPARATOR` | `/` | Separator between project and config |
 | `DOPPLER_PROMPT_FORMAT` | `%project%separator%config` | Format template |
-| `DOPPLER_PROMPT_COLOR` | `cyan` | Color name |
+| `DOPPLER_PROMPT_COLOR` | `cyan` | Color name (fallback) |
+| `DOPPLER_COLOR_DEV` | `green` | Color for dev environments |
+| `DOPPLER_COLOR_STAGING` | `yellow` | Color for staging environments |
+| `DOPPLER_COLOR_PROD` | `red` | Color for production environments |
+| `DOPPLER_COLOR_DEFAULT` | `cyan` | Color for unknown environments |
 | `DOPPLER_P10K_AUTO_ADD` | `false` | Auto-add to p10k right prompt |
 
 ### Powerlevel10k Configuration
@@ -211,8 +218,10 @@ export DOPPLER_PROMPT_PREFIX="env:"
 export DOPPLER_PROMPT_SUFFIX=""
 # Output: env:dev
 
-# Different colors
-export DOPPLER_PROMPT_COLOR="yellow"   # Available: red, green, blue, yellow, magenta, cyan, white
+# Custom environment colors
+export DOPPLER_COLOR_DEV="blue"       # Custom dev color
+export DOPPLER_COLOR_PROD="magenta"   # Custom prod color
+
 ```
 
 ### Format Template
@@ -220,8 +229,28 @@ export DOPPLER_PROMPT_COLOR="yellow"   # Available: red, green, blue, yellow, ma
 The `DOPPLER_PROMPT_FORMAT` variable supports these placeholders:
 
 - `%project` - Doppler project name
-- `%config` - Doppler config name  
+- `%config` - Doppler config name
 - `%separator` - The separator character/string
+
+## Performance
+
+The plugin is optimized for speed:
+
+### Environment Variables (Fastest)
+When using `doppler run`, environment variables are read directly (~13ms).
+
+### YAML File Reading (Fast)
+When not using `doppler run`, the plugin reads from `~/.doppler/.doppler.yaml` (~8ms average).
+
+### CLI Fallback (Slower)
+If the YAML file doesn't exist, falls back to `doppler configure --json` (~450ms, but rare).
+
+### Performance Characteristics
+- **Environment variables**: ~13ms (during `doppler run` sessions)
+- **YAML file reading**: ~8ms (normal shell usage)
+- **CLI fallback**: ~450ms (only when YAML file unavailable)
+
+No caching is needed since the YAML approach is already faster than any cache solution.
 
 ## Utility Functions
 
@@ -242,6 +271,12 @@ Displays all current plugin settings and output.
 doppler_p10k_setup
 ```
 Shows p10k-specific configuration instructions (only works with p10k).
+
+### Clear Cache
+```bash
+_doppler_cache_clear
+```
+Manually clears the cache. Useful for troubleshooting or when you want to force a fresh lookup.
 
 ### Manual Prompt Update
 ```bash
@@ -294,8 +329,8 @@ RPROMPT='$(doppler_prompt_info) %T'
    ```
 
 ### Performance Issues
-- Increase cache TTL: `export DOPPLER_PROMPT_CACHE_TTL=30`
-- Check if Doppler CLI is responding slowly: `time doppler configure get project`
+- Check if Doppler CLI is responding slowly: `time doppler configure --json`
+- Verify `~/.doppler/.doppler.yaml` file exists and is readable
 
 ### Prompt Not Updating
 Make sure you have prompt substitution enabled:
@@ -318,13 +353,76 @@ Tested with:
 - Linux (Zsh 5.0+)
 - Doppler CLI 3.0+
 
+## Testing
+
+This plugin includes a comprehensive test suite using [Vitest](https://vitest.dev/). The tests verify color determination logic, prompt formatting, configuration handling, and Doppler integration.
+
+### Prerequisites
+
+- Node.js 18+
+- pnpm
+- Zsh (for integration tests)
+
+### Running Tests
+
+```bash
+# Install dependencies
+npm install
+
+# Run all tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run tests in watch mode (for development)
+npx vitest
+
+# Run performance tests only
+npm run test:perf
+
+# Check performance against baseline
+npm run perf:check
+
+# View current baseline
+npm run perf:baseline
+```
+
+### Test Structure
+
+- `tests/color-determination.test.js` - Tests environment-based color logic
+- `tests/prompt-formatting.test.js` - Tests prompt formatting and display functions
+- `tests/doppler-info.test.js` - Tests Doppler configuration parsing
+- `tests/configuration.test.js` - Tests plugin configuration and helpers
+- `tests/performance.test.js` - Basic performance tests with fixed thresholds
+- `tests/performance-baseline.test.js` - **Regression detection** with baseline comparison
+- `tests/yaml-approach.test.js` - YAML file reading functionality and performance validation
+
+### Performance Regression Detection
+
+The plugin includes a sophisticated baseline system to catch performance regressions:
+
+- **Baseline tracking**: Stores expected performance metrics (p50, p95, p99)
+- **Regression detection**: Fails tests if performance degrades >50%, warns at >20%
+- **Improvement detection**: Celebrates when performance gets better 🚀
+- **Statistical analysis**: Uses percentiles from multiple samples for accuracy
+
+**Performance Status Indicators:**
+- ✅ Performance within baseline tolerance
+- ⚠️ Performance 20-50% slower than baseline (warning)
+- ❌ Performance >50% slower than baseline (failure)
+- 🚀 Performance better than baseline (improvement!)
+
+The tests execute actual Zsh functions by sourcing the plugin file, ensuring real-world compatibility.
+
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature-name`
 3. Make your changes
-4. Test with different Zsh configurations
-5. Submit a pull request
+4. Run the test suite: `npm test`
+5. Test with different Zsh configurations
+6. Submit a pull request
 
 ## License
 

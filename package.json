@@ -1,0 +1,32 @@
+{
+  "name": "zsh-doppler",
+  "version": "1.0.0",
+  "description": "Zsh plugin to show current Doppler project and config in your prompt",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:perf": "vitest run tests/performance.test.js",
+    "perf:baseline": "node tests/baseline-manager.js summary",
+    "perf:record": "npm run test:perf && echo 'Run with specific values: node tests/baseline-manager.js record <metric> <values>'",
+    "perf:check": "vitest run tests/performance.test.js --reporter=verbose"
+  },
+  "keywords": [
+    "zsh",
+    "plugin",
+    "doppler",
+    "prompt",
+    "secrets",
+    "powerlevel10k"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "vitest": "^2.0.0",
+    "@vitest/coverage-v8": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "pnpm@10.17.1+sha512.17c560fca4867ae9473a3899ad84a88334914f379be46d455cbf92e5cf4b39d34985d452d2583baf19967fa76cb5c17bc9e245529d0b98745721aa7200ecaf7a"
+}
