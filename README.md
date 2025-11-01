@@ -1,5 +1,6 @@
 # Zsh Doppler Plugin
 
+[![Tests](https://github.com/lsdcapital/zsh-doppler/actions/workflows/test.yml/badge.svg)](https://github.com/lsdcapital/zsh-doppler/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub stars](https://img.shields.io/github/stars/lsdcapital/zsh-doppler)](https://github.com/lsdcapital/zsh-doppler/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/lsdcapital/zsh-doppler)](https://github.com/lsdcapital/zsh-doppler/issues)
@@ -242,15 +243,11 @@ When using `doppler run`, environment variables are read directly (~13ms).
 ### YAML File Reading (Fast)
 When not using `doppler run`, the plugin reads from `~/.doppler/.doppler.yaml` (~8ms average).
 
-### CLI Fallback (Slower)
-If the YAML file doesn't exist, falls back to `doppler configure --json` (~450ms, but rare).
-
 ### Performance Characteristics
 - **Environment variables**: ~13ms (during `doppler run` sessions)
 - **YAML file reading**: ~8ms (normal shell usage)
-- **CLI fallback**: ~450ms (only when YAML file unavailable)
 
-No caching is needed since the YAML approach is already faster than any cache solution.
+The plugin uses fast awk-based YAML parsing instead of CLI calls for optimal performance. No caching is needed since the YAML approach is already faster than any cache solution.
 
 ## Utility Functions
 
@@ -435,6 +432,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Support
 
-- 🐛 [Report issues](https://github.com/your-username/zsh-doppler/issues)
+- 🐛 [Report issues](https://github.com/lsdcapital/zsh-doppler/issues)
 - 📖 [Doppler Documentation](https://docs.doppler.com)
 - 💬 [Doppler Community](https://doppler.com/community)

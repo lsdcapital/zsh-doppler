@@ -4,9 +4,11 @@
   "description": "Zsh plugin to show current Doppler project and config in your prompt",
   "type": "module",
   "scripts": {
+    "update": "pnpm up -i -L",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:perf": "vitest run tests/performance.test.js",
+    "typecheck": "tsc --noEmit",
     "perf:baseline": "node tests/baseline-manager.js summary",
     "perf:record": "npm run test:perf && echo 'Run with specific values: node tests/baseline-manager.js record <metric> <values>'",
     "perf:check": "vitest run tests/performance.test.js --reporter=verbose"
@@ -19,11 +21,19 @@
     "secrets",
     "powerlevel10k"
   ],
-  "author": "Your Name",
+  "author": "Stefan Lesicnik <stef@lsd.capital>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lsdcapital/zsh-doppler.git"
+  },
+  "homepage": "https://github.com/lsdcapital/zsh-doppler#readme",
+  "bugs": {
+    "url": "https://github.com/lsdcapital/zsh-doppler/issues"
+  },
   "devDependencies": {
-    "vitest": "^2.0.0",
-    "@vitest/coverage-v8": "^2.0.0"
+    "@vitest/coverage-v8": "^4.0.6",
+    "vitest": "^4.0.6"
   },
   "engines": {
     "node": ">=18"
