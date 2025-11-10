@@ -1,0 +1,28 @@
+# Test configuration for zsh-doppler plugin tests
+# This file is used for testing and does not affect the user's actual Doppler configuration
+
+REPO_ROOT/tests/test-dirs/dev:
+    enclave.project: test-project
+    enclave.config: dev
+REPO_ROOT/tests/test-dirs/prod:
+    enclave.project: test-project
+    enclave.config: production
+REPO_ROOT/tests/test-dirs/staging:
+    enclave.project: test-project
+    enclave.config: staging
+
+# Additional test scenarios
+REPO_ROOT/tests/test-dirs/custom:
+    enclave.project: custom-project
+    enclave.config: custom-environment
+REPO_ROOT/tests/test-dirs/local:
+    enclave.project: local-project
+    enclave.config: local-dev
+REPO_ROOT/tests/test-dirs/uat:
+    enclave.project: uat-project
+    enclave.config: uat-testing
+
+# Version and metadata (similar to real doppler.yaml structure)
+version-check: {}
+tui:
+    introVersionSeen: 0

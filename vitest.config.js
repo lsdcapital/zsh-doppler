@@ -4,8 +4,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['**/tests/**/*.test.js'],
-    // Process management settings
+    include: ['tests/**/*.test.js'],
+    // Process management settings - ensure only one worker process
+    maxWorkers: 1,
     pool: 'forks',
     poolOptions: {
       forks: {

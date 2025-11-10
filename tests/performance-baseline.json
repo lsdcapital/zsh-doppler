@@ -1,0 +1,55 @@
+{
+  "version": "1.0",
+  "timestamp": "2024-01-29T11:45:00Z",
+  "environment": {
+    "node": "20.x",
+    "zsh": "5.x",
+    "platform": "darwin"
+  },
+  "tolerance": {
+    "warning_threshold": 0.20,
+    "failure_threshold": 0.50
+  },
+  "metrics": {
+    "_doppler_get_info_yaml": {
+      "description": "Doppler info lookup from ~/.doppler/.doppler.yaml file (or CLI fallback)",
+      "unit": "ms",
+      "p50": 50,
+      "p95": 350,
+      "p99": 500,
+      "samples": 5
+    },
+    "doppler_prompt_info_env_vars": {
+      "description": "Prompt info with environment variables",
+      "unit": "ms",
+      "p50": 40,
+      "p95": 70,
+      "p99": 100,
+      "samples": 10
+    },
+    "color_determination": {
+      "description": "Environment-based color determination",
+      "unit": "ms",
+      "p50": 30,
+      "p95": 60,
+      "p99": 80,
+      "samples": 4
+    },
+    "prompt_formatting": {
+      "description": "Doppler prompt string formatting",
+      "unit": "ms",
+      "p50": 35,
+      "p95": 65,
+      "p99": 90,
+      "samples": 1
+    },
+    "load_test_average": {
+      "description": "Average duration over 10 rapid calls",
+      "unit": "ms",
+      "p50": 30,
+      "p95": 50,
+      "p99": 70,
+      "samples": 10
+    }
+  }
+}

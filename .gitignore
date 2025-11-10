@@ -47,10 +47,6 @@ temp/
 # OS generated files
 .Trash-*
 
-# Test files
-test/
-tests/
-
 # Development files
 .env
 .env.local

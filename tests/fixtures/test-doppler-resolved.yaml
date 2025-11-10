@@ -1,0 +1,28 @@
+# Test configuration for zsh-doppler plugin tests
+# This file is used for testing and does not affect the user's actual Doppler configuration
+
+/Users/steflsd/src/lsdcapital/zsh-doppler/tests/test-dirs/dev:
+    enclave.project: test-project
+    enclave.config: dev
+/Users/steflsd/src/lsdcapital/zsh-doppler/tests/test-dirs/prod:
+    enclave.project: test-project
+    enclave.config: production
+/Users/steflsd/src/lsdcapital/zsh-doppler/tests/test-dirs/staging:
+    enclave.project: test-project
+    enclave.config: staging
+
+# Additional test scenarios
+/Users/steflsd/src/lsdcapital/zsh-doppler/tests/test-dirs/custom:
+    enclave.project: custom-project
+    enclave.config: custom-environment
+/Users/steflsd/src/lsdcapital/zsh-doppler/tests/test-dirs/local:
+    enclave.project: local-project
+    enclave.config: local-dev
+/Users/steflsd/src/lsdcapital/zsh-doppler/tests/test-dirs/uat:
+    enclave.project: uat-project
+    enclave.config: uat-testing
+
+# Version and metadata (similar to real doppler.yaml structure)
+version-check: {}
+tui:
+    introVersionSeen: 0
