@@ -12,21 +12,21 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18, 20, 22]
+        node-version: [24]
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: latest
 
     - name: Setup Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
-
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v2
-      with:
-        version: latest
 
     - name: Install Zsh
       run: sudo apt-get update && sudo apt-get install -y zsh
@@ -39,4 +39,4 @@ jobs:
 
     - name: Run tests with coverage
       run: pnpm run test:coverage
-      if: matrix.node-version == '20'
+      if: matrix.node-version == '24'
