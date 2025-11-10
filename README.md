@@ -21,6 +21,41 @@ A lightweight Zsh plugin that displays your current [Doppler](https://doppler.co
 - 🛡️ **Reliable** - Graceful fallbacks and error handling
 - ✅ **Well Tested** - Comprehensive test suite with 30+ tests
 
+## Quick Start
+
+Get up and running in under 2 minutes:
+
+1. **Install** (Oh My Zsh):
+   ```bash
+   git clone https://github.com/lsdcapital/zsh-doppler.git ~/.oh-my-zsh/custom/plugins/zsh-doppler
+   ```
+
+2. **Enable** by adding `zsh-doppler` to your plugins in `~/.zshrc`:
+   ```bash
+   plugins=(git zsh-doppler)
+   ```
+
+3. **Add to your prompt**:
+   ```bash
+   PROMPT='${DOPPLER_PROMPT_INFO} %~ $ '   # Left side
+   # or
+   RPROMPT='${DOPPLER_PROMPT_INFO}'        # Right side
+   ```
+
+4. **Reload** your shell:
+   ```bash
+   source ~/.zshrc
+   ```
+
+5. **Configure Doppler** in your project directory:
+   ```bash
+   doppler setup
+   ```
+
+Now your prompt shows `[project/config]` with environment-aware colors! 🎉
+
+**Powerlevel10k users**: Run `doppler_p10k_setup` after installation for p10k-specific instructions.
+
 ## Requirements
 
 - Zsh
@@ -111,64 +146,44 @@ typeset -g POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(
 
 ## Usage
 
-The plugin automatically detects Doppler project and configuration from environment variables. To use the plugin, you need to set these environment variables, which happens automatically when you use `doppler run`.
+### Standard Zsh Prompts
 
-### Environment Variables
-
-The plugin reads these environment variables:
-- `DOPPLER_PROJECT` - Your Doppler project name
-- `DOPPLER_CONFIG` - Your Doppler configuration/environment name  
-- `DOPPLER_ENVIRONMENT` - Alternative to `DOPPLER_CONFIG`
-
-These are automatically set when you use:
-```bash
-doppler run -- your-command
-```
-
-Or you can set them manually:
-```bash
-export DOPPLER_PROJECT=myapp
-export DOPPLER_CONFIG=dev
-```
-
-### Basic Setup (Standard Zsh)
-
-For standard Zsh (non-Powerlevel10k), add the Doppler info to your prompt by including `$(doppler_prompt_info)` in your `PROMPT` or `RPROMPT`:
+Add `${DOPPLER_PROMPT_INFO}` to your `PROMPT` or `RPROMPT`:
 
 ```bash
-# Left side of prompt
-PROMPT='$(doppler_prompt_info) %~ $ '
+# Left prompt
+PROMPT='${DOPPLER_PROMPT_INFO} %~ $ '
 
-# Right side of prompt  
-RPROMPT='$(doppler_prompt_info)'
+# Right prompt
+RPROMPT='${DOPPLER_PROMPT_INFO}'
 
-# Integration with existing prompt
-PROMPT='%F{green}%n@%m%f $(doppler_prompt_info)%F{blue}%~%f $ '
+# With existing elements
+PROMPT='%F{green}%n@%m%f ${DOPPLER_PROMPT_INFO}%F{blue}%~%f $ '
 ```
 
-### Powerlevel10k Setup
+### Powerlevel10k
 
-If you're using Powerlevel10k, the plugin automatically provides a custom segment. Use the helper function:
-
+Run the setup helper to add the `doppler` segment:
 ```bash
 doppler_p10k_setup
 ```
 
-This will show you how to add the `doppler` segment to your p10k configuration.
-
-### Quick Setup Helper
-
-Run the setup helper to see configuration examples:
+Then add `doppler` to your prompt elements in `~/.p10k.zsh`:
 ```bash
-doppler_prompt_setup
+typeset -g POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(
+  doppler  # Add here
+  status
+  # ... other elements
+)
 ```
 
 ### Example Output
 
-When you're in a directory configured with Doppler:
 ```
 [myproject/dev] ~/code/myapp $
 ```
+
+Colors change automatically based on environment: dev (green), staging (yellow), prod (red).
 
 ## Configuration
 
@@ -201,28 +216,24 @@ Additional variables for Powerlevel10k users:
 | `POWERLEVEL9K_DOPPLER_SUFFIX` | `]` | Text after (p10k) |
 | `POWERLEVEL9K_DOPPLER_FORMAT` | Uses `DOPPLER_PROMPT_FORMAT` | P10k format template |
 
-### Configuration Examples
+### Examples
 
 ```bash
-# Disable the prompt
-export DOPPLER_PROMPT_ENABLED=false
+# Minimal config-only display
+export DOPPLER_PROMPT_FORMAT="%config"
+export DOPPLER_PROMPT_PREFIX="env:"
+export DOPPLER_PROMPT_SUFFIX=" "
+# Output: env:dev
 
-# Custom format with different separators
+# Custom separators
 export DOPPLER_PROMPT_PREFIX="("
 export DOPPLER_PROMPT_SUFFIX=")"
 export DOPPLER_PROMPT_SEPARATOR=" → "
 # Output: (myproject → dev)
 
-# Show only the config name
-export DOPPLER_PROMPT_FORMAT="%config"
-export DOPPLER_PROMPT_PREFIX="env:"
-export DOPPLER_PROMPT_SUFFIX=""
-# Output: env:dev
-
 # Custom environment colors
-export DOPPLER_COLOR_DEV="blue"       # Custom dev color
-export DOPPLER_COLOR_PROD="magenta"   # Custom prod color
-
+export DOPPLER_COLOR_DEV="blue"
+export DOPPLER_COLOR_PROD="magenta"
 ```
 
 ### Format Template
@@ -235,105 +246,45 @@ The `DOPPLER_PROMPT_FORMAT` variable supports these placeholders:
 
 ## Performance
 
-The plugin is optimized for speed:
+The plugin is designed for minimal prompt latency:
 
-### Environment Variables (Fastest)
-When using `doppler run`, environment variables are read directly (~13ms).
+### Caching Architecture
+The plugin uses a `precmd` hook to populate `$DOPPLER_PROMPT_INFO` once per command, avoiding file I/O on every keystroke. This means:
+- Use `${DOPPLER_PROMPT_INFO}` in prompts (cached, instant)
+- Avoid `$(doppler_prompt_info)` (executes on every redraw)
 
-### YAML File Reading (Fast)
-When not using `doppler run`, the plugin reads from `~/.doppler/.doppler.yaml` (~8ms average).
+### Data Sources
+1. **Environment variables** (fastest): When using `doppler run`, reads `$DOPPLER_PROJECT` and `$DOPPLER_CONFIG` directly
+2. **YAML file**: When configured via `doppler setup`, reads `~/.doppler/.doppler.yaml` using fast awk-based parsing
 
-### Performance Characteristics
-- **Environment variables**: ~13ms (during `doppler run` sessions)
-- **YAML file reading**: ~8ms (normal shell usage)
-
-The plugin uses fast awk-based YAML parsing instead of CLI calls for optimal performance. No caching is needed since the YAML approach is already faster than any cache solution.
-
-## Utility Functions
-
-### Test Connection
-```bash
-doppler_prompt_test
-```
-Checks if Doppler CLI is available and shows current configuration.
-
-### Show Current Configuration
-```bash
-doppler_prompt_config
-```
-Displays all current plugin settings and output.
-
-### Powerlevel10k Setup Helper
-```bash
-doppler_p10k_setup
-```
-Shows p10k-specific configuration instructions (only works with p10k).
-
-### Clear Cache
-```bash
-_doppler_cache_clear
-```
-Manually clears the cache. Useful for troubleshooting or when you want to force a fresh lookup.
-
-### Manual Prompt Update
-```bash
-doppler_prompt_info
-```
-Returns the formatted Doppler info string (also available as `doppler_prompt`).
-
-## Examples
-
-### Minimalist
-```bash
-export DOPPLER_PROMPT_PREFIX=""
-export DOPPLER_PROMPT_SUFFIX=" "
-export DOPPLER_PROMPT_FORMAT="%config"
-PROMPT='$(doppler_prompt_info)%~ $ '
-# Output: dev ~/myapp $
-```
-
-### Detailed
-```bash
-export DOPPLER_PROMPT_PREFIX="doppler:["
-export DOPPLER_PROMPT_SUFFIX="] "
-export DOPPLER_PROMPT_COLOR="magenta"
-PROMPT='$(doppler_prompt_info)%~ $ '
-# Output: doppler:[myproject/dev] ~/myapp $
-```
-
-### Right-side Prompt
-```bash
-RPROMPT='$(doppler_prompt_info) %T'
-# Shows Doppler info and time on the right side
-```
+The plugin never calls the Doppler CLI during prompt rendering, ensuring consistent performance regardless of network or API conditions.
 
 ## Troubleshooting
 
 ### Plugin Not Showing
-1. Check if you're in a directory with Doppler configuration:
+
+1. **Test the plugin**:
    ```bash
-   doppler configure
+   doppler_prompt_test    # Check Doppler CLI and configuration
+   doppler_prompt_config  # View current plugin settings
    ```
 
-2. Test the plugin:
+2. **Verify Doppler setup**:
    ```bash
-   doppler_prompt_test
+   doppler configure      # Check directory configuration
+   doppler --version      # Ensure CLI is installed
    ```
 
-3. Verify Doppler CLI is installed:
+3. **Check prompt substitution** is enabled:
    ```bash
-   doppler --version
+   setopt prompt_subst
    ```
 
 ### Performance Issues
-- Check if Doppler CLI is responding slowly: `time doppler configure --json`
-- Verify `~/.doppler/.doppler.yaml` file exists and is readable
 
-### Prompt Not Updating
-Make sure you have prompt substitution enabled:
-```bash
-setopt prompt_subst
-```
+- Ensure you're using `${DOPPLER_PROMPT_INFO}` (cached) not `$(doppler_prompt_info)` (executes every keystroke)
+- Verify `~/.doppler/.doppler.yaml` file exists and is readable
+- Check Doppler CLI response time: `time doppler configure --json`
 
 ## Compatibility
 
@@ -352,72 +303,24 @@ Tested with:
 
 ## Testing
 
-This plugin includes a comprehensive test suite using [Vitest](https://vitest.dev/). The tests verify color determination logic, prompt formatting, configuration handling, and Doppler integration.
-
-### Prerequisites
-
-- Node.js 18+
-- pnpm
-- Zsh (for integration tests)
+The plugin includes a comprehensive test suite with color logic, prompt formatting, configuration, and performance regression detection.
 
 ### Running Tests
 
 ```bash
-# Install dependencies
-npm install
-
-# Run all tests
-npm test
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run tests in watch mode (for development)
-npx vitest
-
-# Run performance tests only
-npm run test:perf
-
-# Check performance against baseline
-npm run perf:check
-
-# View current baseline
-npm run perf:baseline
+pnpm install  # Install dependencies
+pnpm test     # Run all tests
+pnpm run test:coverage  # With coverage report
 ```
 
-### Test Structure
-
-- `tests/color-determination.test.js` - Tests environment-based color logic
-- `tests/prompt-formatting.test.js` - Tests prompt formatting and display functions
-- `tests/doppler-info.test.js` - Tests Doppler configuration parsing
-- `tests/configuration.test.js` - Tests plugin configuration and helpers
-- `tests/performance.test.js` - Basic performance tests with fixed thresholds
-- `tests/performance-baseline.test.js` - **Regression detection** with baseline comparison
-- `tests/yaml-approach.test.js` - YAML file reading functionality and performance validation
-
-### Performance Regression Detection
-
-The plugin includes a sophisticated baseline system to catch performance regressions:
-
-- **Baseline tracking**: Stores expected performance metrics (p50, p95, p99)
-- **Regression detection**: Fails tests if performance degrades >50%, warns at >20%
-- **Improvement detection**: Celebrates when performance gets better 🚀
-- **Statistical analysis**: Uses percentiles from multiple samples for accuracy
-
-**Performance Status Indicators:**
-- ✅ Performance within baseline tolerance
-- ⚠️ Performance 20-50% slower than baseline (warning)
-- ❌ Performance >50% slower than baseline (failure)
-- 🚀 Performance better than baseline (improvement!)
-
-The tests execute actual Zsh functions by sourcing the plugin file, ensuring real-world compatibility.
+Tests execute actual Zsh functions to ensure real-world compatibility. See test files in `tests/` for implementation details.
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature-name`
 3. Make your changes
-4. Run the test suite: `npm test`
+4. Run the test suite: `pnpm test`
 5. Test with different Zsh configurations
 6. Submit a pull request
 
