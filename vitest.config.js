@@ -15,11 +15,13 @@ export default defineConfig({
     },
     // Timeout settings
     testTimeout: 10000,
-    teardownTimeout: 3000,
+    teardownTimeout: 5000, // Increased from 3s to allow proper cleanup of child processes
     // Ensure proper cleanup
     sequence: {
       concurrent: false
     },
+    // Reporters - hanging-process helps debug zombie processes
+    reporters: ['default', 'hanging-process'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

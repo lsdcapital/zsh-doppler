@@ -133,28 +133,45 @@ export function cleanupProcesses() {
 }
 
 /**
- * Kill any processes that might be related to our tests
- * NOTE: We don't aggressively kill processes here because:
- * 1. execSync already has timeout + SIGTERM handling (5s timeout in execZshCommand/execZshFunction)
- * 2. Killing "vitest" would kill the test runner itself
- * 3. Killing "zsh.*doppler" can kill active test processes
+ * Kill any orphaned zsh processes running our plugin
+ * This is a safety net for cleanup - following Vitest best practices of
+ * letting the framework handle lifecycle but adding safety nets for child processes
  */
 export function killTestProcesses() {
-  // Disabled aggressive process cleanup - let execSync timeouts handle it
-  // If orphaned processes become an issue, we should track PIDs explicitly
-  // instead of using pkill patterns
+  try {
+    // Kill any zsh processes running our plugin that might have been orphaned
+    execSync('pkill -f "zsh.*doppler.plugin.zsh" 2>/dev/null || true', {
+      stdio: 'ignore',
+      timeout: 1000
+    })
+  } catch (e) {
+    // Ignore errors - processes may not exist or already be killed
+  }
 }
 
 /**
  * Setup process cleanup handlers
- * NOTE: Disabled automatic cleanup handlers as they can interfere with vitest's
- * own process management and cause deadlocks during test runner exit.
- * Test files explicitly call cleanupProcesses() in afterEach/afterAll hooks instead.
+ * Following Vitest best practices: let the framework handle process lifecycle,
+ * but add safety nets for child processes that might be orphaned
  */
 function setupProcessCleanup() {
-  // Disabled - let vitest handle process lifecycle
-  // Tests use explicit cleanup in afterEach/afterAll hooks
+  // Handle normal process exit
+  process.on('exit', () => {
+    killTestProcesses()
+  })
+
+  // Handle Ctrl+C
+  process.on('SIGINT', () => {
+    killTestProcesses()
+    process.exit(130) // Standard exit code for SIGINT
+  })
+
+  // Handle termination signal
+  process.on('SIGTERM', () => {
+    killTestProcesses()
+    process.exit(143) // Standard exit code for SIGTERM
+  })
 }
 
-// Initialize cleanup handlers (currently disabled)
+// Initialize cleanup handlers
 setupProcessCleanup()

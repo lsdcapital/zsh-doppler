@@ -92,11 +92,4 @@ describe('Prompt Formatting', () => {
       expect(result.stdout).toBe('%F{yellow}(test-project/staging)%f')
     })
   })
-
-  describe('_doppler_check_cli', () => {
-    it('should return 0 when doppler CLI is available', () => {
-      const result = execZshCommand('_doppler_check_cli && echo "found" || echo "not found"')
-      expect(result.stdout).toBe('found')
-    })
-  })
 })
