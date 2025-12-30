@@ -116,6 +116,17 @@ zplug "lsdcapital/zsh-doppler"
 antigen bundle lsdcapital/zsh-doppler
 ```
 
+### npm
+
+```bash
+npm install -g @lsdcapital/zsh-doppler
+```
+
+Then add to your `~/.zshrc`:
+```bash
+source "$(npm root -g)/@lsdcapital/zsh-doppler/zsh-doppler.plugin.zsh"
+```
+
 ### Manual Installation
 
 Simply download `zsh-doppler.plugin.zsh` and source it in your `~/.zshrc`:

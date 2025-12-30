@@ -1,5 +1,5 @@
 {
-  "name": "zsh-doppler",
+  "name": "@lsdcapital/zsh-doppler",
   "version": "1.0.0",
   "description": "Zsh plugin to show current Doppler project and config in your prompt",
   "type": "module",
@@ -11,7 +11,11 @@
     "typecheck": "tsc --noEmit",
     "perf:baseline": "node tests/baseline-manager.js summary",
     "perf:record": "npm run test:perf && echo 'Run with specific values: node tests/baseline-manager.js record <metric> <values>'",
-    "perf:check": "vitest run tests/performance.test.js --reporter=verbose"
+    "perf:check": "vitest run tests/performance.test.js --reporter=verbose",
+    "release": "npm version patch && git push --follow-tags",
+    "release:patch": "npm version patch && git push --follow-tags",
+    "release:minor": "npm version minor && git push --follow-tags",
+    "release:major": "npm version major && git push --follow-tags"
   },
   "keywords": [
     "zsh",
