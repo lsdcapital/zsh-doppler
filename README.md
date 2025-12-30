@@ -7,7 +7,7 @@
 
 A lightweight Zsh plugin that displays your current [Doppler](https://doppler.com) project and configuration in your shell prompt from environment variables. Perfect for developers working with multiple Doppler environments who want to keep track of their current context.
 
-![Demo](https://img.shields.io/badge/demo-%5Bmyproject%2Fdev%5D-cyan)
+![Demo](demo.png)
 
 ## Features
 
