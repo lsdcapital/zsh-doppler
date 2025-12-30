@@ -203,6 +203,17 @@ Customize the plugin behavior with these environment variables:
 | `DOPPLER_COLOR_DEFAULT` | `cyan` | Color for unknown environments |
 | `DOPPLER_P10K_AUTO_ADD` | `false` | Auto-add to p10k right prompt |
 
+### Environment Pattern Matching
+
+Colors are automatically assigned based on config name patterns (case-insensitive):
+
+| Color | Patterns | Examples |
+|-------|----------|----------|
+| Green (dev) | `dev*`, `development*`, `local*` | `dev`, `dev-us`, `development`, `local` |
+| Yellow (staging) | `stag*`, `staging*`, `test*`, `uat*`, `qa*` | `staging`, `stg`, `test`, `uat`, `qa` |
+| Red (prod) | `prod*`, `production*`, `live*`, `prd*` | `prod`, `production`, `prd`, `live` |
+| Cyan (default) | `ci*`, `sandbox*`, and everything else | `ci`, `sandbox`, `demo`, `preview` |
+
 ### Powerlevel10k Configuration
 
 Additional variables for Powerlevel10k users:
@@ -283,8 +294,8 @@ The plugin never calls the Doppler CLI during prompt rendering, ensuring consist
 ### Performance Issues
 
 - Ensure you're using `${DOPPLER_PROMPT_INFO}` (cached) not `$(doppler_prompt_info)` (executes every keystroke)
-- Verify `~/.doppler/.doppler.yaml` file exists and is readable
-- Check Doppler CLI response time: `time doppler configure --json`
+- Verify `~/.doppler/.doppler.yaml` file exists and is readable (created by `doppler setup`)
+- Check YAML parsing: `cat ~/.doppler/.doppler.yaml | grep $(pwd)` to verify directory config exists
 
 ## Compatibility
 
@@ -298,8 +309,10 @@ This plugin works with:
 
 Tested with:
 - macOS (Zsh 5.8+)
-- Linux (Zsh 5.0+)
+- Linux (Zsh 5.1+)
 - Doppler CLI 3.0+
+
+**Note**: Requires Zsh 5.1+ due to use of `${var:l}` lowercase parameter expansion.
 
 ## Testing
 

@@ -8,11 +8,12 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        node-version: [24]
+        os: [ubuntu-latest, macos-latest]
+        node-version: [22, 24]
 
     steps:
     - uses: actions/checkout@v4
@@ -28,8 +29,13 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'pnpm'
 
-    - name: Install Zsh
+    - name: Install Zsh (Linux)
+      if: runner.os == 'Linux'
       run: sudo apt-get update && sudo apt-get install -y zsh
+
+    - name: Verify Zsh (macOS)
+      if: runner.os == 'macOS'
+      run: zsh --version
 
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
@@ -39,4 +45,23 @@ jobs:
 
     - name: Run tests with coverage
       run: pnpm run test:coverage
-      if: matrix.node-version == '24'
+      if: matrix.node-version == 24 && matrix.os == 'ubuntu-latest'
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install shellcheck
+      run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+    - name: Lint zsh plugin with shellcheck
+      # Excluded warnings:
+      # SC1071 - ShellCheck only supports sh/bash/ksh (we're using zsh)
+      # SC2148 - Missing shebang (we have #!/usr/bin/env zsh)
+      # SC2034 - Variable appears unused (zsh plugin exports variables)
+      # SC2086 - Double quote to prevent globbing (zsh handles this differently)
+      # SC2155 - Declare and assign separately (style preference, not a bug)
+      # SC2206 - Quote to prevent word splitting (zsh array syntax)
+      # SC2221/SC2222 - Pattern override warnings (false positive for case patterns)
+      run: shellcheck -s bash -e SC1071,SC2148,SC2034,SC2086,SC2155,SC2206,SC2221,SC2222 zsh-doppler.plugin.zsh

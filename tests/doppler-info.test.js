@@ -1,7 +1,18 @@
-import { describe, it, expect, afterEach, afterAll } from 'vitest'
-import { execZshCommand, cleanupProcesses, killTestProcesses } from './helpers.js'
+import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
+import { execZshCommand, cleanupProcesses, killTestProcesses, setupTestEnvironment } from './helpers.js'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const testDirsPath = join(__dirname, 'test-dirs')
 
 describe('Doppler Info Retrieval', () => {
+  // Setup test environment before tests
+  beforeAll(() => {
+    setupTestEnvironment()
+  })
+
   // Cleanup after each test to prevent process accumulation
   afterEach(() => {
     cleanupProcesses()
@@ -12,6 +23,7 @@ describe('Doppler Info Retrieval', () => {
     cleanupProcesses()
     killTestProcesses()
   })
+
   describe('_doppler_get_info', () => {
     it('should prioritize environment variables from doppler run', () => {
       const command = `
@@ -80,14 +92,12 @@ describe('Doppler Info Retrieval', () => {
   })
 
   describe('Integration with real doppler configuration', () => {
-    // These tests require actual doppler setup in test directories
-    it('should read from doppler CLI when available', () => {
-      // This test would work if we had actual doppler setup
-      // For now, we'll test the command structure
+    // These tests use the test YAML configuration
+    it('should read from YAML file when in configured directory', () => {
+      const devDir = join(testDirsPath, 'dev')
       const command = `
-        cd /tmp/test-doppler 2>/dev/null || true
-        # Test the structure without requiring actual doppler config
-        echo "test-project:dev"
+        cd "${devDir}" 2>/dev/null || true
+        _doppler_get_info
       `
       const result = execZshCommand(command)
       expect(result.stdout).toBe('test-project:dev')

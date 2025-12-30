@@ -37,11 +37,14 @@ function _doppler_get_color() {
         dev*|development*|local*)
             color="$DOPPLER_COLOR_DEV"
             ;;
-        stag*|staging*|test*|uat*)
+        stag*|staging*|test*|uat*|qa*)
             color="$DOPPLER_COLOR_STAGING"
             ;;
-        prod*|production*|live*)
+        prod*|production*|live*|prd*)
             color="$DOPPLER_COLOR_PROD"
+            ;;
+        ci*|sandbox*)
+            color="$DOPPLER_COLOR_DEFAULT"
             ;;
         *)
             color="$DOPPLER_COLOR_DEFAULT"
@@ -98,8 +101,16 @@ function _doppler_get_info() {
     local doppler_yaml="${DOPPLER_YAML_PATH:-$HOME/.doppler/.doppler.yaml}"
     if [[ -f "$doppler_yaml" ]]; then
         local current_dir="$(pwd)"
+        # Escape special regex characters in directory path for AWK pattern matching
+        local escaped_dir="${current_dir//\\/\\\\}"
+        escaped_dir="${escaped_dir//./\\.}"
+        escaped_dir="${escaped_dir//\*/\\*}"
+        escaped_dir="${escaped_dir//\[/\\[}"
+        escaped_dir="${escaped_dir//\]/\\]}"
+        escaped_dir="${escaped_dir//\^/\\^}"
+        escaped_dir="${escaped_dir//\$/\\$}"
         local info
-        info=$(awk -v dir="$current_dir" '
+        info=$(awk -v dir="$escaped_dir" '
             $0 ~ "^[[:space:]]*" dir ":" {found=1}
             found && /enclave.project:/ {project=$2}
             found && /enclave.config:/ {config=$2; print project ":" config; exit}
@@ -156,7 +167,8 @@ function _doppler_precmd() {
     # Calculate doppler prompt info once per command (not per redraw!)
     # This prevents expensive file I/O on every keystroke, backspace, cursor movement, etc.
     if [[ "$DOPPLER_PROMPT_ENABLED" == "true" ]]; then
-        DOPPLER_PROMPT_INFO=$(doppler_prompt_info)
+        # Capture output and suppress errors to avoid prompt corruption
+        DOPPLER_PROMPT_INFO=$(doppler_prompt_info 2>/dev/null) || DOPPLER_PROMPT_INFO=""
     else
         DOPPLER_PROMPT_INFO=""
     fi
@@ -378,7 +390,7 @@ EOF
         echo "✓ doppler found in RIGHT prompt elements"
     else
         echo "⚠ doppler NOT found in prompt elements - add manually to ~/.p10k.zsh"
-        echo "  Quick add to right prompt: echo 'doppler' | sed -i '1s/^/&/' ~/.p10k.zsh"
+        echo "  Edit ~/.p10k.zsh and add 'doppler' to POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS"
     fi
 }
 

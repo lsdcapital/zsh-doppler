@@ -1,8 +1,19 @@
-import { describe, it, expect, afterEach, afterAll } from 'vitest'
-import { execZshCommand, cleanupProcesses, killTestProcesses } from './helpers.js'
+import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
+import { execZshCommand, cleanupProcesses, killTestProcesses, setupTestEnvironment } from './helpers.js'
 import { BaselineManager } from './baseline-manager.js'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const testDirsPath = join(__dirname, 'test-dirs')
 
 describe('Performance Baseline Tests', () => {
+  // Setup test environment before tests
+  beforeAll(() => {
+    setupTestEnvironment()
+  })
+
   // Cleanup after each test to prevent process accumulation
   afterEach(() => {
     cleanupProcesses()
@@ -13,6 +24,7 @@ describe('Performance Baseline Tests', () => {
     cleanupProcesses()
     killTestProcesses()
   })
+
   const baseline = new BaselineManager()
 
   // Helper function to run multiple samples and return durations
@@ -31,8 +43,9 @@ describe('Performance Baseline Tests', () => {
 
   describe('Core Performance Metrics', () => {
     it('should measure _doppler_get_info YAML read performance', async () => {
+      const devDir = join(testDirsPath, 'dev')
       const yamlCommand = `
-        cd /tmp/test-doppler 2>/dev/null || true
+        cd "${devDir}" 2>/dev/null || true
         _doppler_get_info
       `
 

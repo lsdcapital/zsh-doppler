@@ -78,10 +78,10 @@ Plugin uses environment variables with conditional defaults:
 - Fails tests if performance degrades >50%, warns at >20%
 
 ### Test Dependencies
-Requires these directories to exist in `~/.doppler/.doppler.yaml`:
-- `/tmp/test-doppler` (project: test-project, config: dev)
-- `/tmp/test-doppler-prod` (project: test-project, config: production)
-- `/tmp/test-doppler-staging` (project: test-project, config: staging)
+Tests are self-contained and do not require any external configuration:
+- Test directories are created dynamically in `tests/test-dirs/`
+- A test YAML file is generated from `tests/fixtures/test-doppler.yaml`
+- Tests use `DOPPLER_YAML_PATH` environment variable to point to the test YAML
 
 ## Key Implementation Details
 

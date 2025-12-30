@@ -26,20 +26,36 @@ describe('Color Determination', () => {
       expect(execZshFunction('_doppler_get_color', 'stag')).toBe('yellow')
       expect(execZshFunction('_doppler_get_color', 'test')).toBe('yellow')
       expect(execZshFunction('_doppler_get_color', 'uat')).toBe('yellow')
+      expect(execZshFunction('_doppler_get_color', 'qa')).toBe('yellow')
+      expect(execZshFunction('_doppler_get_color', 'qa-regression')).toBe('yellow')
       expect(execZshFunction('_doppler_get_color', 'STAGING')).toBe('yellow') // uppercase
+      expect(execZshFunction('_doppler_get_color', 'QA')).toBe('yellow') // uppercase
     })
 
     it('should return red for production environments', () => {
       expect(execZshFunction('_doppler_get_color', 'prod')).toBe('red')
       expect(execZshFunction('_doppler_get_color', 'production')).toBe('red')
       expect(execZshFunction('_doppler_get_color', 'live')).toBe('red')
+      expect(execZshFunction('_doppler_get_color', 'prd')).toBe('red')
+      expect(execZshFunction('_doppler_get_color', 'prd-us')).toBe('red')
       expect(execZshFunction('_doppler_get_color', 'PROD')).toBe('red') // uppercase
+      expect(execZshFunction('_doppler_get_color', 'PRD')).toBe('red') // uppercase
+    })
+
+    it('should return cyan for CI and sandbox environments', () => {
+      expect(execZshFunction('_doppler_get_color', 'ci')).toBe('cyan')
+      expect(execZshFunction('_doppler_get_color', 'ci-main')).toBe('cyan')
+      expect(execZshFunction('_doppler_get_color', 'sandbox')).toBe('cyan')
+      expect(execZshFunction('_doppler_get_color', 'sandbox-test')).toBe('cyan')
+      expect(execZshFunction('_doppler_get_color', 'CI')).toBe('cyan') // uppercase
     })
 
     it('should return cyan for unknown environments', () => {
       expect(execZshFunction('_doppler_get_color', 'unknown')).toBe('cyan')
       expect(execZshFunction('_doppler_get_color', 'custom')).toBe('cyan')
       expect(execZshFunction('_doppler_get_color', 'api')).toBe('cyan')
+      expect(execZshFunction('_doppler_get_color', 'demo')).toBe('cyan')
+      expect(execZshFunction('_doppler_get_color', 'preview')).toBe('cyan')
       expect(execZshFunction('_doppler_get_color', '')).toBe('cyan') // empty string
     })
   })

@@ -1,7 +1,18 @@
-import { describe, it, expect, afterEach, afterAll } from 'vitest'
-import { execZshCommand, cleanupProcesses, killTestProcesses } from './helpers.js'
+import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
+import { execZshCommand, cleanupProcesses, killTestProcesses, setupTestEnvironment } from './helpers.js'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const testDirsPath = join(__dirname, 'test-dirs')
 
 describe('Performance Tests', () => {
+  // Setup test environment before tests
+  beforeAll(() => {
+    setupTestEnvironment()
+  })
+
   // Cleanup after each test to prevent process accumulation
   afterEach(() => {
     cleanupProcesses()
@@ -12,12 +23,14 @@ describe('Performance Tests', () => {
     cleanupProcesses()
     killTestProcesses()
   })
+
   describe('Function execution timing', () => {
     it('should execute _doppler_get_info in reasonable time', async () => {
       const start = Date.now()
+      const devDir = join(testDirsPath, 'dev')
 
       const command = `
-        cd /tmp/test-doppler 2>/dev/null || true
+        cd "${devDir}" 2>/dev/null || true
         _doppler_get_info
       `
 
@@ -47,12 +60,13 @@ describe('Performance Tests', () => {
       console.log(`doppler_prompt_info (env vars) took ${duration}ms`)
     })
 
-    it('should measure CLI-based lookup performance', () => {
+    it('should measure YAML-based lookup performance', () => {
       const start = Date.now()
+      const devDir = join(testDirsPath, 'dev')
 
       const command = `
-        cd /tmp/test-doppler 2>/dev/null || true
-        # Simulate no env vars, force CLI lookup
+        cd "${devDir}" 2>/dev/null || true
+        # Simulate no env vars, force YAML lookup
         unset DOPPLER_PROJECT DOPPLER_CONFIG DOPPLER_ENVIRONMENT
         doppler_prompt_info
       `
@@ -60,9 +74,9 @@ describe('Performance Tests', () => {
       const result = execZshCommand(command)
       const duration = Date.now() - start
 
-      // CLI lookup might be slower but should still be reasonable
+      // YAML lookup should be reasonably fast
       expect(duration).toBeLessThan(2000)
-      console.log(`doppler_prompt_info (CLI lookup) took ${duration}ms`)
+      console.log(`doppler_prompt_info (YAML lookup) took ${duration}ms`)
     })
 
     it('should benchmark color determination speed', () => {
