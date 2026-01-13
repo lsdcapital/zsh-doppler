@@ -19,7 +19,8 @@ A lightweight Zsh plugin that displays your current [Doppler](https://doppler.co
 - 🔌 **Compatible** - Works with Oh My Zsh, Prezto, or standalone Zsh
 - 💎 **Powerlevel10k** - Full custom segment support with instant prompt compatibility
 - 🛡️ **Reliable** - Graceful fallbacks and error handling
-- ✅ **Well Tested** - Comprehensive test suite with 30+ tests
+- ⚠️ **Production Warning** - Visual alert when entering production directories
+- ✅ **Well Tested** - Comprehensive test suite with 57 tests
 
 ## Quick Start
 
@@ -213,6 +214,8 @@ Customize the plugin behavior with these environment variables:
 | `DOPPLER_COLOR_PROD` | `red` | Color for production environments |
 | `DOPPLER_COLOR_DEFAULT` | `cyan` | Color for unknown environments |
 | `DOPPLER_P10K_AUTO_ADD` | `false` | Auto-add to p10k right prompt |
+| `DOPPLER_PROD_WARNING` | `true` | Show warning when entering prod directories |
+| `DOPPLER_PROD_WARNING_MESSAGE` | `⚠️  PRODUCTION ENVIRONMENT` | Custom warning message |
 
 ### Environment Pattern Matching
 
@@ -256,6 +259,30 @@ export DOPPLER_PROMPT_SEPARATOR=" → "
 # Custom environment colors
 export DOPPLER_COLOR_DEV="blue"
 export DOPPLER_COLOR_PROD="magenta"
+```
+
+### Production Warning
+
+When you `cd` into a directory configured for a production environment, the plugin displays a warning banner:
+
+```
+⚠️  PRODUCTION ENVIRONMENT (myproject/prod)
+```
+
+This helps prevent accidental operations in production. The warning appears when:
+- You `cd` into a directory with a production Doppler config
+- The config name matches production patterns (`prod*`, `production*`, `live*`, `prd*`)
+
+The warning does **not** repeat when:
+- Moving between subdirectories of the same production directory
+- Already in the production directory context
+
+```bash
+# Disable production warnings
+export DOPPLER_PROD_WARNING=false
+
+# Customize the warning message
+export DOPPLER_PROD_WARNING_MESSAGE="🔴 DANGER: PRODUCTION"
 ```
 
 ### Format Template

@@ -7,12 +7,8 @@ export default defineConfig({
     include: ['tests/**/*.test.js'],
     // Process management settings - ensure only one worker process
     maxWorkers: 1,
+    isolate: false,
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true
-      }
-    },
     // Timeout settings
     testTimeout: 10000,
     teardownTimeout: 5000, // Increased from 3s to allow proper cleanup of child processes

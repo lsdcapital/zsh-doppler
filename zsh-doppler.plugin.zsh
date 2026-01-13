@@ -17,6 +17,10 @@
 [[ -z "$DOPPLER_COLOR_PROD" ]] && DOPPLER_COLOR_PROD="red"
 [[ -z "$DOPPLER_COLOR_DEFAULT" ]] && DOPPLER_COLOR_DEFAULT="cyan"
 
+# Production warning configuration
+[[ -z "$DOPPLER_PROD_WARNING" ]] && DOPPLER_PROD_WARNING=true
+[[ -z "$DOPPLER_PROD_WARNING_MESSAGE" ]] && DOPPLER_PROD_WARNING_MESSAGE="⚠️  PRODUCTION ENVIRONMENT"
+
 
 
 # Check if doppler CLI is available
@@ -52,6 +56,21 @@ function _doppler_get_color() {
     esac
 
     echo "$color"
+}
+
+# Check if a config name matches production patterns
+function _doppler_is_production() {
+    local config_lower="${1:l}"
+    [[ "$config_lower" == prod* || "$config_lower" == production* ||
+       "$config_lower" == live* || "$config_lower" == prd* ]]
+}
+
+# Display production warning banner
+function _doppler_show_prod_warning() {
+    local project="$1" config="$2"
+    [[ "$DOPPLER_PROD_WARNING" != "true" ]] && return
+
+    print -P "%F{red}%B${DOPPLER_PROD_WARNING_MESSAGE}%b%f %F{white}($project/$config)%f"
 }
 
 # Convert color names to Powerlevel10k color codes
@@ -181,6 +200,37 @@ setopt prompt_subst
 autoload -Uz add-zsh-hook
 add-zsh-hook precmd _doppler_precmd
 
+# Production warning on directory change (only on transition into prod)
+_DOPPLER_PROD_DIR=""
+
+function _doppler_chpwd() {
+    local info project config current_dir="$PWD"
+
+    # Check if we're still under a known prod directory (exact match or subdir)
+    if [[ -n "$_DOPPLER_PROD_DIR" ]]; then
+        if [[ "$current_dir" = "$_DOPPLER_PROD_DIR" || "$current_dir" = "$_DOPPLER_PROD_DIR"/* ]]; then
+            return  # Still in prod context, no warning needed
+        fi
+    fi
+
+    # Check if new directory has a prod config
+    if info=$(_doppler_get_info); then
+        project="${info%%:*}"
+        config="${info#*:}"
+
+        if _doppler_is_production "$config"; then
+            _doppler_show_prod_warning "$project" "$config"
+            _DOPPLER_PROD_DIR="$current_dir"
+            return
+        fi
+    fi
+
+    # Not in prod (or no config)
+    _DOPPLER_PROD_DIR=""
+}
+
+add-zsh-hook chpwd _doppler_chpwd
+
 # Helper functions for manual prompt setup
 function doppler_prompt_setup() {
     cat << 'EOF'
@@ -225,6 +275,10 @@ function doppler_prompt_config() {
     echo "  DOPPLER_COLOR_STAGING: $DOPPLER_COLOR_STAGING"
     echo "  DOPPLER_COLOR_PROD: $DOPPLER_COLOR_PROD"
     echo "  DOPPLER_COLOR_DEFAULT: $DOPPLER_COLOR_DEFAULT"
+    echo ""
+    echo "Production Warning:"
+    echo "  DOPPLER_PROD_WARNING: $DOPPLER_PROD_WARNING"
+    echo "  DOPPLER_PROD_WARNING_MESSAGE: '$DOPPLER_PROD_WARNING_MESSAGE'"
     echo ""
     echo "Caching behavior:"
     echo "  DOPPLER_PROMPT_INFO (cached): '$DOPPLER_PROMPT_INFO'"
