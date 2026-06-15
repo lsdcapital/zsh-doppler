@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Replaced the zsh-only `<->` glob in `_doppler_color_to_ansi` with a
+  shellcheck-parseable pattern (behavior unchanged), restoring the CI lint job.
+
+### Changed
+
+- Bumped GitHub Actions to v6 (Node 24 runtime) and made the pinned `packageManager`
+  field the single source of truth for the pnpm version in CI.
+
 ## [1.1.0] - 2026-06-15
 
 ### Added
