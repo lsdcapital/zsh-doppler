@@ -23,7 +23,8 @@
     "doppler",
     "prompt",
     "secrets",
-    "powerlevel10k"
+    "powerlevel10k",
+    "starship"
   ],
   "author": "Stefan Lesicnik <stef@lsd.capital>",
   "license": "MIT",

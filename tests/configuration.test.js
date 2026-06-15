@@ -49,6 +49,7 @@ describe('Configuration and Helper Functions', () => {
         { var: 'DOPPLER_PROMPT_SEPARATOR', expected: '/' },
         { var: 'DOPPLER_PROMPT_FORMAT', expected: '%project%separator%config' },
         { var: 'DOPPLER_PROMPT_COLOR', expected: 'cyan' },
+        { var: 'DOPPLER_STARSHIP_USE_ANSI', expected: 'true' },
         { var: 'DOPPLER_COLOR_DEV', expected: 'green' },
         { var: 'DOPPLER_COLOR_STAGING', expected: 'yellow' },
         { var: 'DOPPLER_COLOR_PROD', expected: 'red' },

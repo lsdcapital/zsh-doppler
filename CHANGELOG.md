@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [1.1.0] - 2026-06-15
+
+### Added
+
+- **Starship support** via cached, exported prompt variables (`DOPPLER_PROMPT_STARSHIP`,
+  `DOPPLER_PROMPT_TEXT`, `DOPPLER_PROMPT_ANSI`) and a `doppler_starship_setup` helper that
+  prints a ready-to-paste custom module.
+- New output functions for non-zsh prompt engines: `doppler_prompt_text` (plain),
+  `doppler_prompt_ansi` (ANSI-colored), and `doppler_prompt_color` (color name only).
+- `DOPPLER_STARSHIP_USE_ANSI` option (default `true`) to choose between Doppler's dynamic
+  ANSI colors and Starship-managed styling.
+
+### Changed
+
+- YAML resolution now **inherits the nearest parent directory scope** instead of requiring
+  an exact working-directory match. A subdirectory with its own scope still overrides the
+  inherited parent. (As a consequence, the awk parser scans the whole `.doppler.yaml`
+  rather than exiting on the first match; negligible for typical files.)
+- `_doppler_precmd` now exports only the Starship-facing variables (`DOPPLER_PROMPT_TEXT`,
+  `DOPPLER_PROMPT_ANSI`, `DOPPLER_PROMPT_STARSHIP`); `DOPPLER_PROMPT_INFO` and
+  `DOPPLER_PROMPT_COLOR_CURRENT` remain plain shell variables to avoid polluting the
+  environment of child processes.
+
+## [1.0.1] - 2025-12-30
+
+### Changed
+
+- Moved the package to the `@lsdcapital` npm org and published with provenance.
+- Added a Vitest-based test suite and GitHub Actions CI/release pipeline.
+- Packaging and metadata fixes in preparation for the first npm release.
+
 ## [1.0.0] - 2024-01-05
 
 ### Added
@@ -98,4 +131,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI/CD with GitHub Actions
 - Performance baseline tracking system
 
+[Unreleased]: https://github.com/lsdcapital/zsh-doppler/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/lsdcapital/zsh-doppler/compare/v1.0.1...v1.1.0
+[1.0.1]: https://github.com/lsdcapital/zsh-doppler/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/lsdcapital/zsh-doppler/releases/tag/v1.0.0

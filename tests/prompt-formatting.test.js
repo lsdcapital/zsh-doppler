@@ -91,5 +91,17 @@ describe('Prompt Formatting', () => {
       const result = execZshCommand(command)
       expect(result.stdout).toBe('%F{yellow}(test-project/staging)%f')
     })
+
+    it('should allow intentionally empty prefix and suffix', () => {
+      const command = `
+        DOPPLER_PROJECT="test-project" \\
+        DOPPLER_CONFIG="dev" \\
+        DOPPLER_PROMPT_PREFIX="" \\
+        DOPPLER_PROMPT_SUFFIX="" \\
+        doppler_prompt_text
+      `
+      const result = execZshCommand(command)
+      expect(result.stdout).toBe('test-project/dev')
+    })
   })
 })

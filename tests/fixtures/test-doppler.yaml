@@ -10,6 +10,10 @@ REPO_ROOT/tests/test-dirs/prod:
 REPO_ROOT/tests/test-dirs/staging:
     enclave.project: test-project
     enclave.config: staging
+# A subdirectory with its own scope, used to verify it overrides the inherited parent
+REPO_ROOT/tests/test-dirs/staging/sub:
+    enclave.project: sub-project
+    enclave.config: sub-config
 
 # Additional test scenarios
 REPO_ROOT/tests/test-dirs/custom:

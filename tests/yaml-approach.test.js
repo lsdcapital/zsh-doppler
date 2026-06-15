@@ -35,6 +35,42 @@ describe('YAML-based Doppler Info', () => {
       expect(result.stdout).toBe('test-project:dev')
     })
 
+    it('should inherit doppler info from parent directories', () => {
+      const testDir = join(testDirsPath, 'dev')
+      const command = `
+        mkdir -p "${testDir}/nested/child"
+        cd "${testDir}/nested/child"
+        _doppler_get_info
+      `
+
+      const result = execZshCommand(command)
+      expect(result.stdout).toBe('test-project:dev')
+    })
+
+    it('should prefer a subdirectory own scope over the inherited parent', () => {
+      const testDir = join(testDirsPath, 'staging', 'sub')
+      const command = `
+        mkdir -p "${testDir}"
+        cd "${testDir}"
+        _doppler_get_info
+      `
+
+      const result = execZshCommand(command)
+      expect(result.stdout).toBe('sub-project:sub-config')
+    })
+
+    it('should inherit a subdirectory own scope into its children', () => {
+      const testDir = join(testDirsPath, 'staging', 'sub', 'deeper')
+      const command = `
+        mkdir -p "${testDir}"
+        cd "${testDir}"
+        _doppler_get_info
+      `
+
+      const result = execZshCommand(command)
+      expect(result.stdout).toBe('sub-project:sub-config')
+    })
+
     it('should work faster than CLI approach', async () => {
       // Test YAML approach speed
       const testDir = join(testDirsPath, 'dev')

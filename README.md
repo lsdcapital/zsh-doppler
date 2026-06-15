@@ -18,9 +18,10 @@ A lightweight Zsh plugin that displays your current [Doppler](https://doppler.co
 - 🔧 **Highly Customizable** - Configure colors, format, prefix/suffix, and more
 - 🔌 **Compatible** - Works with Oh My Zsh, Prezto, or standalone Zsh
 - 💎 **Powerlevel10k** - Full custom segment support with instant prompt compatibility
+- 🚀 **Starship** - Custom module support via cached plain/ANSI prompt variables
 - 🛡️ **Reliable** - Graceful fallbacks and error handling
 - ⚠️ **Production Warning** - Visual alert when entering production directories
-- ✅ **Well Tested** - Comprehensive test suite with 57 tests
+- ✅ **Well Tested** - Comprehensive test suite
 
 ## Quick Start
 
@@ -56,6 +57,8 @@ Get up and running in under 2 minutes:
 Now your prompt shows `[project/config]` with environment-aware colors! 🎉
 
 **Powerlevel10k users**: Run `doppler_p10k_setup` after installation for p10k-specific instructions.
+
+**Starship users**: Source this plugin before `eval "$(starship init zsh)"`, then run `doppler_starship_setup` for a ready-to-paste custom module.
 
 ## Requirements
 
@@ -189,6 +192,44 @@ typeset -g POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(
 )
 ```
 
+### Starship
+
+Starship cannot consume Powerlevel10k segments directly, so this plugin exports cached prompt variables that Starship can display through a custom module.
+
+1. Source `zsh-doppler` **before** Starship in `~/.zshrc`:
+
+```bash
+source /path/to/zsh-doppler.plugin.zsh
+eval "$(starship init zsh)"
+```
+
+2. Add `$custom` to your Starship `format` or `right_format`, then add this to `~/.config/starship.toml`:
+
+```toml
+[custom.doppler]
+command = 'printf "%s" "$DOPPLER_PROMPT_STARSHIP"'
+when = 'test -n "$DOPPLER_PROMPT_STARSHIP"'
+format = '$output'
+```
+
+Run `doppler_starship_setup` to print this snippet from your shell.
+
+> **Note:** The default ANSI mode embeds raw color codes in the module output, preserving Doppler's dynamic dev/staging/prod colors. In some terminals this can cause minor spacing/width artifacts. If you hit that, switch to Starship-managed styling below.
+
+If you prefer Starship-managed styling instead of Doppler's dynamic ANSI colors:
+
+```bash
+export DOPPLER_STARSHIP_USE_ANSI=false
+```
+
+```toml
+[custom.doppler]
+command = 'printf "%s" "$DOPPLER_PROMPT_TEXT"'
+when = 'test -n "$DOPPLER_PROMPT_TEXT"'
+format = '[$output]($style)'
+style = 'cyan'
+```
+
 ### Example Output
 
 ```
@@ -214,6 +255,7 @@ Customize the plugin behavior with these environment variables:
 | `DOPPLER_COLOR_PROD` | `red` | Color for production environments |
 | `DOPPLER_COLOR_DEFAULT` | `cyan` | Color for unknown environments |
 | `DOPPLER_P10K_AUTO_ADD` | `false` | Auto-add to p10k right prompt |
+| `DOPPLER_STARSHIP_USE_ANSI` | `true` | Use Doppler ANSI colors for `doppler_prompt_starship` |
 | `DOPPLER_PROD_WARNING` | `true` | Show warning when entering prod directories |
 | `DOPPLER_PROD_WARNING_MESSAGE` | `⚠️  PRODUCTION ENVIRONMENT` | Custom warning message |
 
@@ -298,13 +340,14 @@ The `DOPPLER_PROMPT_FORMAT` variable supports these placeholders:
 The plugin is designed for minimal prompt latency:
 
 ### Caching Architecture
-The plugin uses a `precmd` hook to populate `$DOPPLER_PROMPT_INFO` once per command, avoiding file I/O on every keystroke. This means:
-- Use `${DOPPLER_PROMPT_INFO}` in prompts (cached, instant)
+The plugin uses a `precmd` hook to populate prompt variables once per command, avoiding file I/O on every keystroke. This means:
+- Use `${DOPPLER_PROMPT_INFO}` in normal zsh prompts (cached zsh prompt escapes)
+- Use `${DOPPLER_PROMPT_STARSHIP}` in Starship custom modules (`${DOPPLER_PROMPT_TEXT}` and `${DOPPLER_PROMPT_ANSI}` are also available)
 - Avoid `$(doppler_prompt_info)` (executes on every redraw)
 
 ### Data Sources
 1. **Environment variables** (fastest): When using `doppler run`, reads `$DOPPLER_PROJECT` and `$DOPPLER_CONFIG` directly
-2. **YAML file**: When configured via `doppler setup`, reads `~/.doppler/.doppler.yaml` using fast awk-based parsing
+2. **YAML file**: When configured via `doppler setup`, reads `~/.doppler/.doppler.yaml` using fast awk-based parsing and inherits the nearest parent directory scope
 
 The plugin never calls the Doppler CLI during prompt rendering, ensuring consistent performance regardless of network or API conditions.
 
@@ -333,7 +376,7 @@ The plugin never calls the Doppler CLI during prompt rendering, ensuring consist
 
 - Ensure you're using `${DOPPLER_PROMPT_INFO}` (cached) not `$(doppler_prompt_info)` (executes every keystroke)
 - Verify `~/.doppler/.doppler.yaml` file exists and is readable (created by `doppler setup`)
-- Check YAML parsing: `cat ~/.doppler/.doppler.yaml | grep $(pwd)` to verify directory config exists
+- Check YAML parsing: `grep -F "$(pwd)" ~/.doppler/.doppler.yaml` to verify directory config exists
 
 ## Compatibility
 
@@ -343,6 +386,7 @@ This plugin works with:
 - ✅ Standalone Zsh
 - ✅ **Powerlevel10k** - Full custom segment support
 - ✅ Powerlevel9k - Compatible with p10k segment API
+- ✅ **Starship** - Custom module support through cached exported variables
 - ✅ Any Zsh framework that supports plugins
 
 Tested with:
@@ -383,6 +427,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 - [Doppler CLI](https://github.com/DopplerHQ/cli) - Official Doppler command-line tool
 - [Oh My Zsh](https://github.com/ohmyzsh/ohmyzsh) - Framework for managing Zsh configuration
+- [Starship](https://starship.rs) - Cross-shell prompt
 
 ## Support
 

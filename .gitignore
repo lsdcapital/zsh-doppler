@@ -47,6 +47,9 @@ temp/
 # OS generated files
 .Trash-*
 
+# Generated test fixtures (rebuilt from templates by setupTestEnvironment)
+tests/fixtures/test-doppler-resolved.yaml
+
 # Development files
 .env
 .env.local
