@@ -210,8 +210,11 @@ function _doppler_color_to_ansi() {
         magenta|5) print -nr -- $'\033[35m' ;;
         cyan|6)    print -nr -- $'\033[36m' ;;
         white|7)   print -nr -- $'\033[37m' ;;
-        <->)       print -nr -- $'\033[38;5;'"$color"$'m' ;;
-        *)         return 1 ;;
+        # Empty or non-numeric (e.g. brightred) is unsupported; the caller degrades
+        # to uncolored text. Any remaining all-digit value is a 256-color code.
+        # (Pattern avoids the zsh-only <-> glob so shellcheck can parse this file.)
+        ''|*[!0-9]*) return 1 ;;
+        *)         print -nr -- $'\033[38;5;'"$color"$'m' ;;
     esac
 }
 
