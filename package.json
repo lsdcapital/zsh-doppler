@@ -1,6 +1,6 @@
 {
   "name": "@lsdcapital/zsh-doppler",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Zsh plugin to show current Doppler project and config in your prompt",
   "type": "module",
   "scripts": {
